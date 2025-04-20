@@ -68,23 +68,20 @@ class _CartItemState extends State<CartItem> with TickerProviderStateMixin {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          '',
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Image.asset(
-                            'assets/images/product_default.jpg',
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                          ),
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return _buildShimmerSkeleton();
-                          },
-                        ),
+                        child: (widget.cartItem.product.image == null ||
+                                widget.cartItem.product.image!.isEmpty)
+                            ? Image.asset(
+                                'assets/images/default_food.jpg',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.network(
+                                widget.cartItem.product.image!,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -96,13 +93,13 @@ class _CartItemState extends State<CartItem> with TickerProviderStateMixin {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w500),
+                                  fontSize: 14, fontWeight: FontWeight.w500),
                             ),
                             Text(
                               CurrencyFormatter.format(
                                   widget.cartItem.product.price),
                               style: const TextStyle(
-                                fontSize: 14,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -112,7 +109,7 @@ class _CartItemState extends State<CartItem> with TickerProviderStateMixin {
                                 child: Text(
                                   "${widget.cartItem.note}",
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 12,
                                     fontStyle: FontStyle.italic,
                                     color: Colors.grey[700],
                                   ),
@@ -196,6 +193,7 @@ class _CartItemState extends State<CartItem> with TickerProviderStateMixin {
             decoration: InputDecoration(
               filled: true,
               hintText: 'Ghi chú',
+              hintStyle: const TextStyle(fontSize: 12),
               fillColor: Colors.grey[200],
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
@@ -218,6 +216,9 @@ class _CartItemState extends State<CartItem> with TickerProviderStateMixin {
                       }
                     : null,
               ),
+            ),
+            style: const TextStyle(
+              fontSize: 12,
             ),
           );
         },

@@ -17,7 +17,7 @@ class InvoiceFetchByIdStarted extends InvoiceEvent {
 class InvoiceCreateStarted extends InvoiceEvent {
   final String orderId;
   final String paymentMethod;
-  final double amountGiven;
+  final double? amountGiven;
 
   InvoiceCreateStarted(
       {required this.orderId,

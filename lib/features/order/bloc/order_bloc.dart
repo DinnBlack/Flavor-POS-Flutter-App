@@ -41,7 +41,8 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         );
       }).toList();
       await orderService.createStaffOrder(event.tableNumber, orderItems);
-      final currentTable = await tableService.getTableByTableNumber(event.tableNumber);
+      final currentTable =
+          await tableService.getTableByTableNumber(event.tableNumber);
       await tableService.updateTableStatusOccupied(currentTable.id);
       emit(OrderStaffCreateSuccess());
       add(OrderFetchStarted());
@@ -74,7 +75,11 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       OrderFetchStarted event, Emitter<OrderState> emit) async {
     try {
       emit(OrderFetchInProgress());
-      final orders = await orderService.getOrders(statuses: event.status);
+      final orders = await orderService.getOrders(
+        statuses: event.status,
+        startTime: event.startTime,
+        endTime: event.endTime,
+      );
       emit(OrderFetchSuccess(orders: orders));
     } catch (e) {
       emit(OrderFetchFailure(error: e.toString()));
@@ -87,7 +92,15 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       emit(OrderUpdateInProgress());
       await orderService.rejectOrder(event.orderId);
       emit(OrderUpdateSuccess());
-      add(OrderFetchStarted(status: ['PENDING', 'READY_TO_DELIVER', 'DELIVERED', 'APPROVED'],));
+      if (event.isChef) {
+        add(OrderFetchStarted(
+          status: ['PENDING'],
+        ));
+      } else {
+        add(OrderFetchStarted(
+          status: ['PENDING', 'READY_TO_DELIVER', 'DELIVERED', 'APPROVED'],
+        ));
+      }
     } catch (e) {
       emit(OrderUpdateFailure(error: e.toString()));
     }
@@ -99,7 +112,15 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       emit(OrderUpdateInProgress());
       await orderService.markOrderAsReadyToDeliver(event.orderId);
       emit(OrderUpdateSuccess());
-      add(OrderFetchStarted(status: ['PENDING', 'READY_TO_DELIVER', 'DELIVERED', 'APPROVED'],));
+      if (event.isChef) {
+        add(OrderFetchStarted(
+          status: ['APPROVED'],
+        ));
+      } else {
+        add(OrderFetchStarted(
+          status: ['PENDING', 'READY_TO_DELIVER', 'DELIVERED', 'APPROVED'],
+        ));
+      }
     } catch (e) {
       emit(OrderUpdateFailure(error: e.toString()));
     }
@@ -111,7 +132,15 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       emit(OrderUpdateInProgress());
       await orderService.markOrderAsDelivered(event.orderId);
       emit(OrderUpdateSuccess());
-      add(OrderFetchStarted(status: ['PENDING', 'READY_TO_DELIVER', 'DELIVERED', 'APPROVED'],));
+      if (event.isWaiter) {
+        add(OrderFetchStarted(
+          status: ['READY_TO_DELIVER'],
+        ));
+      } else {
+        add(OrderFetchStarted(
+          status: ['PENDING', 'READY_TO_DELIVER', 'DELIVERED', 'APPROVED'],
+        ));
+      }
     } catch (e) {
       emit(OrderUpdateFailure(error: e.toString()));
     }
@@ -123,7 +152,15 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       emit(OrderUpdateInProgress());
       await orderService.approveOrder(event.orderId);
       emit(OrderUpdateSuccess());
-      add(OrderFetchStarted(status: ['PENDING', 'READY_TO_DELIVER', 'DELIVERED', 'APPROVED'],));
+      if (event.isChef) {
+        add(OrderFetchStarted(
+          status: ['PENDING'],
+        ));
+      } else {
+        add(OrderFetchStarted(
+          status: ['PENDING', 'READY_TO_DELIVER', 'DELIVERED', 'APPROVED'],
+        ));
+      }
     } catch (e) {
       emit(OrderUpdateFailure(error: e.toString()));
     }

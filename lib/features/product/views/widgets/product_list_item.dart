@@ -26,7 +26,7 @@ class ProductListItem extends StatelessWidget {
     return GestureDetector(
       onTap: () => _addToCart(context),
       child: Container(
-        padding: EdgeInsets.all(defaultPadding),
+        padding: const EdgeInsets.all(defaultPadding),
         decoration: BoxDecoration(
           color: colors.secondary,
           borderRadius: BorderRadius.circular(10),
@@ -38,19 +38,28 @@ class ProductListItem extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  'https://olo-images-live.imgix.net/8f/8f8694d0003147f8a9e42b88fd3c4e6d.jpg?auto=format%2Ccompress&q=60&cs=tinysrgb&w=1200&h=800&fit=fill&fm=png32&bg=transparent&s=d9336295f5745120004b168ed1a79b5e',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/images/product_default.jpg',
-                    fit: BoxFit.cover,
-                  ),
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return _buildShimmerSkeleton();
-                  },
-                ),
+                child: (product.image == null || product.image!.isEmpty)
+                    ? Center(
+                        child: Image.asset(
+                          'assets/images/default_food.jpg',
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
+                      )
+                    : Image.network(
+                        product.image!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Image.asset(
+                          'assets/images/default_food.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return _buildShimmerSkeleton();
+                        },
+                      ),
               ),
             ),
             const SizedBox(height: 10),

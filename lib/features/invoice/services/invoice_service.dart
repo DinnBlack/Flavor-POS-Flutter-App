@@ -56,7 +56,7 @@
     Future<InvoiceModel> createInvoice({
       required String orderId,
       required String paymentMethod,
-      required double amountGiven,
+      required double? amountGiven,
     }) async {
       final headers = await ApiHeaders.getHeaders();
 

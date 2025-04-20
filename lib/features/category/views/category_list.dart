@@ -4,29 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/constants.dart';
 import '../../../core/utils/responsive.dart';
+import '../../product/bloc/product_bloc.dart';
 import '../bloc/category_bloc.dart';
 import '../model/category_model.dart';
 import 'widgets/category_list_item.dart';
+import 'widgets/category_skeleton_item.dart';
 
 class MyCategories extends StatelessWidget {
-  final Function(String?) onCategorySelected;
-
-  const MyCategories({super.key, required this.onCategorySelected});
+  const MyCategories({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Responsive(
-      mobile: CategoryList(onCategorySelected: onCategorySelected),
-      tablet: CategoryList(onCategorySelected: onCategorySelected),
-      desktop: CategoryList(onCategorySelected: onCategorySelected),
+    return const Responsive(
+      mobile: CategoryList(),
+      tablet: CategoryList(),
+      desktop: CategoryList(),
     );
   }
 }
 
 class CategoryList extends StatefulWidget {
-  final Function(String?) onCategorySelected;
-
-  const CategoryList({super.key, required this.onCategorySelected});
+  const CategoryList({super.key});
 
   @override
   State<CategoryList> createState() => _CategoryListState();
@@ -43,7 +41,6 @@ class _CategoryListState extends State<CategoryList> {
       setState(() {
         selectedIndex = 0;
       });
-      widget.onCategorySelected(null);
     });
   }
 
@@ -57,16 +54,20 @@ class _CategoryListState extends State<CategoryList> {
     return BlocBuilder<CategoryBloc, CategoryState>(
       builder: (context, state) {
         if (state is CategoryFetchInProgress) {
-          return const SizedBox(
+          return SizedBox(
             height: 60,
-            child: Center(
-              child: CircularProgressIndicator(),
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
+              itemCount: 5,
+              separatorBuilder: (context, index) =>
+                  const SizedBox(width: defaultPadding),
+              itemBuilder: (context, index) => const CategorySkeletonItem(),
             ),
           );
         }
 
         if (state is CategoryFetchFailure) {
-          print(state.error);
           return SizedBox(
             height: 60,
             child: Center(
@@ -97,8 +98,10 @@ class _CategoryListState extends State<CategoryList> {
                       onTap: () {
                         setState(() {
                           selectedIndex = index;
+                          context
+                              .read<ProductBloc>()
+                              .add(ProductFetchStarted());
                         });
-                        widget.onCategorySelected(null);
                       },
                     ),
                   );
@@ -112,8 +115,9 @@ class _CategoryListState extends State<CategoryList> {
                       onTap: () {
                         setState(() {
                           selectedIndex = index;
+                          context.read<ProductBloc>().add(
+                              ProductFetchStarted(categoryId: category.id));
                         });
-                        widget.onCategorySelected(category.id);
                       },
                     ),
                   );

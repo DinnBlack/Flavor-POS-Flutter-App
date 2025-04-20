@@ -11,7 +11,6 @@ class OrderHistoryScreen extends StatefulWidget {
 }
 
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
-
   @override
   void initState() {
     super.initState();
@@ -29,6 +28,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 ActivityHeader(
                   title: 'Lịch sử đơn hàng',
+                ),
+                SizedBox(
+                  height: 10,
                 ),
                 Expanded(
                   child: OrderHistory(),

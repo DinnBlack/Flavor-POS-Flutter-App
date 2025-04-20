@@ -12,11 +12,10 @@ class ActivityHeader extends StatelessWidget {
     required this.title,
   });
 
-
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
       child: Row(
         children: [
           if (!Responsive.isDesktop(context)) ...[
@@ -29,7 +28,7 @@ class ActivityHeader extends StatelessWidget {
             )
           ],
           if (!Responsive.isMobile(context))
-              Text.rich(
+            Text.rich(
               TextSpan(
                 children: [
                   const TextSpan(
@@ -50,12 +49,6 @@ class ActivityHeader extends StatelessWidget {
                 ],
               ),
             ),
-          const Spacer(),
-          // ToggleSwitchWidget(
-          //   options: options,
-          //   onToggle: onToggle,
-          //   selectedIndex: selectedIndex,
-          // ),
         ],
       ),
     );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:order_management_flutter_app/core/utils/currency_formatter.dart';
+import 'package:order_management_flutter_app/features/invoice/model/invoice_model.dart';
 
 import '../../../core/utils/id_formatter.dart';
 import '../../../core/widgets/dash_divider.dart';
@@ -6,8 +8,9 @@ import '../model/order_model.dart';
 
 class OrderDetail extends StatelessWidget {
   final OrderModel order;
+  final InvoiceModel? invoice;
 
-  const OrderDetail({super.key, required this.order});
+  const OrderDetail({super.key, required this.order, this.invoice});
 
   String _formatCurrency(double value) {
     return '${value.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (match) => '${match[1]}.')}₫';
@@ -15,7 +18,7 @@ class OrderDetail extends StatelessWidget {
 
   Widget _infoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -28,73 +31,25 @@ class OrderDetail extends StatelessWidget {
 
   Widget _sectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(top: 16.0, bottom: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
       ),
     );
   }
 
-  Widget _statusRow(String status) {
-    String statusText;
-    Color backgroundColor;
-    Color textColor;
-
-    // Determine the status text and colors
-    switch (status) {
-      case 'PENDING':
-        statusText = 'Chờ xử lý';
-        backgroundColor = Colors.orange.withOpacity(0.1);
-        textColor = Colors.orange;
-        break;
-      case 'READY_TO_DELIVER':
-        statusText = 'Sẵn sàng giao hàng';
-        backgroundColor = Colors.blue.withOpacity(0.1);
-        textColor = Colors.blue;
-        break;
-      case 'DELIVERED':
-        statusText = 'Đã giao';
-        backgroundColor = Colors.green.withOpacity(0.1);
-        textColor = Colors.green;
-        break;
-      case 'APPROVED':
-        statusText = 'Đã duyệt';
-        backgroundColor = Colors.purple.withOpacity(0.1);
-        textColor = Colors.purple;
-        break;
-      default:
-        statusText = 'Chưa rõ';
-        backgroundColor = Colors.grey.withOpacity(0.1);
-        textColor = Colors.grey;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        statusText,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
 
   Widget _comboItemsTile() {
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
       title: const Text(
-        'Tiền mặt hàng, combo',
-        style: TextStyle(fontSize: 16),
+        'Món ăn',
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
       ),
       trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: Colors.blue.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
@@ -106,20 +61,23 @@ class OrderDetail extends StatelessWidget {
       ),
       children: order.orderItems
           .map((item) => Column(
-        children: [
-          const DashDivider(),
-          ListTile(
-            dense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-            visualDensity: const VisualDensity(horizontal: VisualDensity.minimumDensity, vertical: VisualDensity.minimumDensity),
-            title: Text('${item.quantity} x ${item.dishName}'),
-            subtitle: item.note.isNotEmpty
-                ? Text('Ghi chú: ${item.note}')
-                : null,
-            trailing: Text(_formatCurrency(item.dishPrice)),
-          ),
-        ],
-      ))
+                children: [
+                  const DashDivider(),
+                  ListTile(
+                    dense: true,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 10),
+                    visualDensity: const VisualDensity(
+                        horizontal: VisualDensity.minimumDensity,
+                        vertical: VisualDensity.minimumDensity),
+                    title: Text('${item.quantity} x ${item.dishName}'),
+                    subtitle: item.note.isNotEmpty
+                        ? Text('Ghi chú: ${item.note}')
+                        : null,
+                    trailing: Text(_formatCurrency(item.dishPrice)),
+                  ),
+                ],
+              ))
           .toList(),
     );
   }
@@ -129,25 +87,29 @@ class OrderDetail extends StatelessWidget {
     Color backgroundColor = Colors.grey;
 
     switch (status.toUpperCase()) {
-      case 'REJECTION':
+      case 'REJECTED':
         displayText = 'Đã hủy';
         backgroundColor = Colors.red;
         break;
       case 'APPROVED':
         displayText = 'Đang hoạt động';
-        backgroundColor = Colors.orange;
+        backgroundColor = Colors.blue;
         break;
       case 'READY_TO_DELIVER':
         displayText = 'Đang hoạt động';
-        backgroundColor = Colors.orange;
+        backgroundColor = Colors.blue;
         break;
       case 'DELIVERED':
-        displayText = 'Hoàn thành';
-        backgroundColor = Colors.green;
+        displayText = 'Đang hoạt động';
+        backgroundColor = Colors.blue;
         break;
       case 'PENDING':
         displayText = 'Chờ xác nhận';
-        backgroundColor = Colors.blue;
+        backgroundColor = Colors.amber;
+        break;
+      case 'PAID':
+        displayText = 'Hoàn thành';
+        backgroundColor = Colors.green;
         break;
       default:
         displayText = 'Không xác định';
@@ -155,7 +117,7 @@ class OrderDetail extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: backgroundColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
@@ -177,7 +139,7 @@ class OrderDetail extends StatelessWidget {
       tilePadding: EdgeInsets.zero,
       title: const Text(
         'Thông tin thanh toán',
-        style: TextStyle(fontSize: 16),
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
       ),
       trailing: Text(
         _formatCurrency(order.total),
@@ -185,9 +147,15 @@ class OrderDetail extends StatelessWidget {
       ),
       children: [
         const DashDivider(),
-        _infoRow('Hình thức thanh toán','Tiền mặt'),
-        _infoRow('Tiền khách đưa', '0đ'),
-        _infoRow('Tiền trả khách', '0đ'),
+        if (invoice != null) ...[
+          _infoRow('Hình thức thanh toán', invoice!.paymentMethod == 'CASH' ? 'Tiền mặt': 'Chuyển khoản'),
+          _infoRow('Tiền khách đưa', CurrencyFormatter.format(invoice!.amountGiven)),
+          _infoRow('Tiền trả khách', CurrencyFormatter.format(invoice!.changeAmount)),
+        ] else ...[
+          _infoRow('Hình thức thanh toán', 'Chưa thanh toán'),
+          _infoRow('Tiền khách đưa', '0₫'),
+          _infoRow('Tiền trả khách', '0₫'),
+        ]
       ],
     );
   }
@@ -200,11 +168,20 @@ class OrderDetail extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionTitle('Thông tin đơn hàng'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _sectionTitle('Thông tin đơn hàng'),
+                Text('#${formatIdToBase36Short( order.id)}', style: TextStyle(fontWeight: FontWeight.bold),),
+              ],
+            ),
             _comboItemsTile(),
             _paymentInfoTile(),
             _sectionTitle('Thông tin giao dịch'),
-            _infoRow('Mã tham chiếu:', formatIdToBase36Short(order.id)),
+            _infoRow(
+              'Mã tham chiếu:',
+              invoice != null ? formatIdToBase36WithPrefix(invoice!.invoiceCode) : 'Chưa thanh toán',
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -212,7 +189,8 @@ class OrderDetail extends StatelessWidget {
                 _buildStatusCell(order.status),
               ],
             ),
-            _infoRow('Hình thức phục vụ:', 'Ăn tại bàn (Bàn ${order.tableNumber})'),
+            _infoRow(
+                'Hình thức phục vụ:', 'Ăn tại bàn (Bàn ${order.tableNumber})'),
             _infoRow('Thông tin khách hàng:', 'Khách lẻ'),
             const SizedBox(height: 20),
             Row(
@@ -224,7 +202,7 @@ class OrderDetail extends StatelessWidget {
                   child: const Text('Đóng'),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

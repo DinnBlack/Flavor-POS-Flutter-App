@@ -11,6 +11,25 @@ class ProductList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (products.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.network(
+              'https://cdn-icons-png.flaticon.com/512/4076/4076549.png',
+              height: 150,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Không có sản phẩm nào!',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
     return LayoutBuilder(builder: (context, constraints) {
       int crossAxisCount;
 

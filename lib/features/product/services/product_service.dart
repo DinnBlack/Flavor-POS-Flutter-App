@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../../core/config/api_config.dart';
 import '../../../core/utils/api_headers.dart';
@@ -31,23 +30,66 @@ class ProductService {
     int page = 0,
     int size = 1000,
     String sort = "createdAt,ASC",
+    String? categoryId,
+    bool? isShown,
   }) async {
     try {
       final headers = await ApiHeaders.getHeaders();
-      final response = await http.get(
-        Uri.parse("$baseUrl?page=$page&size=$size&sort=$sort"),
-        headers: headers,
-      );
+      // Tạo danh sách filter
+      List<String> filters = [];
+      if (categoryId != null) filters.add("categoryId=$categoryId");
+      if (isShown == true) filters.add("isShown=true");
+
+      final queryParams = {
+        'page': '$page',
+        'size': '$size',
+        'sort': sort,
+        if (filters.isNotEmpty) 'filter': filters.join(";"),
+      };
+
+      final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
+
+      final response = await http.get(uri, headers: headers);
+
+      final utf8DecodedBody = utf8.decode(response.bodyBytes);
+
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return (data['items'] as List)
+        final data = json.decode(utf8DecodedBody);
+        final products = (data['items'] as List)
             .map((item) => ProductModel.fromMap(item))
             .toList();
+        return products;
       } else {
         throw Exception("Failed to load products: ${response.body}");
       }
     } catch (e) {
       throw Exception("Error fetching products: $e");
+    }
+  }
+
+  Future<int> getTotalProductCount({
+    String? categoryId,
+  }) async {
+    try {
+      final headers = await ApiHeaders.getHeaders();
+      final queryParams = {
+        'page': '0',
+        'size': '1',
+        'sort': 'createdAt,ASC',
+        if (categoryId != null) 'filter': 'categoryId=$categoryId',
+      };
+      final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
+      final response = await http.get(uri, headers: headers);
+      final utf8DecodedBody = utf8.decode(response.bodyBytes);
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8DecodedBody);
+        int totalItems = data['totalItems'];
+        return totalItems;
+      } else {
+        throw Exception("Failed to load total product count: ${response.body}");
+      }
+    } catch (e) {
+      throw Exception("Error fetching product count: $e");
     }
   }
 
@@ -58,8 +100,12 @@ class ProductService {
     String? categoryId,
   }) async {
     try {
-      String query =
-          "?page=$page&size=$size&sort=$sort${categoryId != null ? '&filter=categoryId=$categoryId' : ''}";
+      String filter = "isShown=true";
+      if (categoryId != null) {
+        filter += ";categoryId=$categoryId";
+      }
+
+      String query = "?page=$page&size=$size&sort=$sort&filter=$filter";
 
       final response = await http.get(
         Uri.parse("$baseCusUrl$query"),
@@ -68,8 +114,9 @@ class ProductService {
         },
       );
 
+      final utf8DecodedBody = utf8.decode(response.bodyBytes);
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8DecodedBody);
         return (data['items'] as List)
             .map((item) => ProductModel.fromMap(item))
             .toList();
@@ -116,35 +163,32 @@ class ProductService {
   }
 
   Future<void> createProduct(
-      String name,
-      double price,
-      String description,
-      bool isShown,
-      String categoryId,
-      File? imageFile,
-      ) async {
+    String name,
+    double price,
+    String description,
+    bool isShown,
+    String categoryId,
+    File? imageFile,
+  ) async {
     try {
       final headers = await ApiHeaders.getHeaders();
       String? imageUrl;
 
       if (imageFile != null) {
-        // B1: Lấy presigned URL
-        final presigned = await s3Service.getPresignedUploadUrl(
-          contentType: 'image/jpeg',
+        String contentType = 'image/jpeg';
+        String acl = 'public-read';
+        imageUrl = await S3Service.uploadImage(
+          imageFile: imageFile,
+          contentType: contentType,
+          acl: acl,
         );
 
-        // B2: Upload file lên S3
-        await s3Service.uploadFileToS3(
-          uploadUrl: presigned.url,
-          file: imageFile,
-          contentType: 'image/jpeg',
-        );
-
-        // B3: Lấy URL để truy cập ảnh
-        imageUrl = await s3Service.getViewImageUrl(key: presigned.key);
+        if (imageUrl != null) {
+          print('Ảnh đã được upload thành công! URL ảnh: $imageUrl');
+        } else {
+          print('Có lỗi xảy ra khi upload ảnh.');
+        }
       }
-
-      print(imageUrl);
 
       final productData = {
         "name": name,
@@ -152,10 +196,10 @@ class ProductService {
         "description": description,
         "isShown": isShown,
         "categoryId": categoryId,
-        "image": imageUrl,
+        "image": imageUrl ?? '',
       };
 
-      print(productData);
+      print("Sending product data: $productData");
 
       final createResponse = await http.post(
         Uri.parse(baseUrl),
@@ -163,10 +207,11 @@ class ProductService {
         body: json.encode(productData),
       );
 
-      print(productData);
-      print(createResponse.body);
+      print("Response status: ${createResponse.statusCode}");
+      print("Response body: ${createResponse.body}");
 
-      if (createResponse.statusCode != 200 && createResponse.statusCode != 201) {
+      if (createResponse.statusCode != 200 &&
+          createResponse.statusCode != 201) {
         throw Exception("❌ Failed to create product: ${createResponse.body}");
       }
 
@@ -176,8 +221,6 @@ class ProductService {
       throw Exception("Error creating product: $e");
     }
   }
-
-
 
   Future<void> updateProduct(
     String id,
@@ -206,6 +249,38 @@ class ProductService {
       }
     } catch (e) {
       throw Exception("Error updating product: $e");
+    }
+  }
+
+  Future<void> showProduct(ProductModel product) async {
+    await _updateProductVisibility(product, true);
+  }
+
+  Future<void> hideProduct(ProductModel product) async {
+    await _updateProductVisibility(product, false);
+  }
+
+  Future<void> _updateProductVisibility(
+      ProductModel product, bool isVisible) async {
+    try {
+      final headers = await ApiHeaders.getHeaders();
+      final response = await http.put(
+        Uri.parse("$baseUrl/${product.id}"),
+        headers: headers,
+        body: json.encode({
+          "name": product.name,
+          "price": product.price,
+          "description": product.description,
+          "isShown": isVisible,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+            "Failed to update product visibility: ${response.body}");
+      }
+    } catch (e) {
+      throw Exception("Error updating product visibility: $e");
     }
   }
 }

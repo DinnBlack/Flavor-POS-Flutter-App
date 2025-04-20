@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:diacritic/diacritic.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -52,22 +53,6 @@ class _ProductPageState extends State<ProductPage> {
     super.dispose();
   }
 
-  void _filterProductsByCategory(String? categoryId) {
-    setState(() {
-      selectedCategoryId = categoryId;
-
-      if (categoryId == null || categoryId.isEmpty) {
-        _filteredProducts = List.from(_allProducts);
-      } else {
-        _filteredProducts = _allProducts.where((product) {
-          return '' == categoryId;
-        }).toList();
-        _onSearchChanged(_searchController.text);
-      }
-      _sortProducts(selectedSortOption);
-    });
-  }
-
   void _sortProducts(String option) {
     setState(() {
       selectedSortOption = option;
@@ -85,12 +70,7 @@ class _ProductPageState extends State<ProductPage> {
           _filteredProducts.sort((a, b) => b.name.compareTo(a.name));
           break;
         default:
-          _filteredProducts.sort((a, b) {
-            int idA = int.tryParse(a.id) ?? 0;
-            int idB = int.tryParse(b.id) ?? 0;
-            _filterProductsByCategory(selectedCategoryId);
-            return idA.compareTo(idB);
-          });
+          context.read<ProductBloc>().add(ProductFetchStarted());
           break;
       }
     });
@@ -98,18 +78,12 @@ class _ProductPageState extends State<ProductPage> {
 
   void _onSearchChanged(String query) {
     setState(() {
-      if (query.isEmpty) {
-        _filteredProducts = selectedCategoryId == null
-            ? List.from(_allProducts)
-            : _allProducts.where((product) {
-                return '' == selectedCategoryId;
-              }).toList();
-      } else {
-        _filteredProducts = _allProducts.where((product) {
-          return (selectedCategoryId == null || '' == selectedCategoryId) &&
-              product.toString().toLowerCase().contains(query.toLowerCase());
-        }).toList();
-      }
+      String normalizedQuery = removeDiacritics(query.toLowerCase());
+      _filteredProducts = _allProducts.where((product) {
+        String normalizedProductName =
+            removeDiacritics(product.name.toLowerCase());
+        return normalizedProductName.contains(normalizedQuery);
+      }).toList();
     });
   }
 
@@ -128,14 +102,6 @@ class _ProductPageState extends State<ProductPage> {
           setState(() {
             _isCreatingProduct = false;
           });
-        }
-        if (state is ProductDeleteSuccess) {
-          CustomToast.showToast(context, "Xóa sản phẩm thành công!",
-              type: ContentType.success);
-        }
-        if (state is ProductDeleteFailure) {
-          CustomToast.showToast(context, "Xóa sản phẩm thất bại!",
-              type: ContentType.failure);
         }
       },
       child: _isCreatingProduct
@@ -206,7 +172,6 @@ class _ProductPageState extends State<ProductPage> {
                           width: 10,
                         ),
                         ProductInventoryFilter(
-                          onCategorySelected: _filterProductsByCategory,
                           onSortOptionSelected: _sortProducts,
                         ),
                         const Spacer(),

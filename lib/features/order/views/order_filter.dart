@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:order_management_flutter_app/features/order/bloc/order_bloc.dart';
 
 class OrderFilter extends StatefulWidget {
   final Function(DateTime startDate, TimeOfDay startTime, DateTime endDate,
@@ -23,27 +25,13 @@ class _OrderFilterState extends State<OrderFilter> {
 
   final List<Map<String, dynamic>> filterOptions = [
     {'icon': Icons.list, 'title': 'Tất cả đơn hàng'},
-    {
-      'icon': Icons.check_circle,
-      'title': 'Đơn hoàn thành',
-      'status': 'DELIVERED'
-    },
+    {'icon': Icons.check_circle, 'title': 'Đơn hoàn thành', 'status': 'PAID'},
     {
       'icon': Icons.pending,
       'title': 'Đang hoạt động',
-      'status': ['APPROVED', 'READY_TO_DELIVER'],
+      'status': ['APPROVED', 'READY_TO_DELIVER', 'DELIVERED'],
     },
     {'icon': Icons.cancel, 'title': 'Đơn bị hủy', 'status': 'REJECTED'},
-    {
-      'icon': Icons.attach_money,
-      'title': 'Đã thanh toán',
-      'paymentStatus': 'paid'
-    },
-    {
-      'icon': Icons.money_off,
-      'title': 'Chưa thanh toán',
-      'paymentStatus': 'unpaid'
-    },
   ];
 
   String? selectedFilter;
@@ -89,6 +77,20 @@ class _OrderFilterState extends State<OrderFilter> {
       });
     }
   }
+
+  List<String>? _getStatusFromFilter(String? title) {
+    final option = filterOptions.firstWhere(
+          (e) => e['title'] == title,
+      orElse: () => {},
+    );
+
+    final status = option['status'];
+    if (status == null) return null;
+    if (status is String) return [status];
+    if (status is List<String>) return status;
+    return null;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -137,10 +139,54 @@ class _OrderFilterState extends State<OrderFilter> {
           const Spacer(),
           GestureDetector(
             onTap: () {
-              widget.onFilterChanged(
-                  _startDate, _startTime, _endDate, _endTime, selectedFilter);
+              context.read<OrderBloc>().add(OrderFetchStarted());
             },
             child: Container(
+              padding: const EdgeInsets.all(10),
+              height: 40,
+              width: 40,
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: const BorderRadius.all(Radius.circular(30)),
+              ),
+              child: SvgPicture.asset('assets/icons/Reset.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter:
+                      const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
+            ),
+          ),
+          const SizedBox(
+            width: 10,
+          ),
+          GestureDetector(
+              onTap: () {
+                final statusList = _getStatusFromFilter(selectedFilter);
+
+                final startDateTime = DateTime(
+                  _startDate.year,
+                  _startDate.month,
+                  _startDate.day,
+                  _startTime.hour,
+                  _startTime.minute,
+                );
+
+                final endDateTime = DateTime(
+                  _endDate.year,
+                  _endDate.month,
+                  _endDate.day,
+                  _endTime.hour,
+                  _endTime.minute,
+                );
+
+                context.read<OrderBloc>().add(OrderFetchStarted(
+                  status: statusList,
+                  startTime: startDateTime,
+                  endTime: endDateTime,
+                ));
+              }
+,
+              child: Container(
               padding: const EdgeInsets.all(10),
               height: 40,
               width: 40,

@@ -3,9 +3,9 @@ import '../../order/model/order_model.dart';
 class InvoiceModel {
   final String id;
   final String invoiceCode;
-  final int total;
-  final int amountGiven;
-  final int changeAmount;
+  final double total;
+  final double amountGiven;
+  final double changeAmount;
   final String paymentMethod;
   final String cashierName;
   final OrderModel order;
@@ -69,9 +69,9 @@ class InvoiceModel {
   InvoiceModel copyWith({
     String? id,
     String? invoiceCode,
-    int? total,
-    int? amountGiven,
-    int? changeAmount,
+    double? total,
+    double? amountGiven,
+    double? changeAmount,
     String? paymentMethod,
     String? cashierName,
     OrderModel? order,
@@ -108,12 +108,12 @@ class InvoiceModel {
     return InvoiceModel(
       id: map['id'] as String,
       invoiceCode: map['invoiceCode'] as String,
-      total: map['total'] as int,
-      amountGiven: map['amountGiven'] as int,
-      changeAmount: map['changeAmount'] as int,
+      total: (map['total'] ?? 0).toDouble(),
+      amountGiven: (map['amountGiven'] ?? 0).toDouble(),
+      changeAmount: (map['changeAmount'] ?? 0).toDouble(),
       paymentMethod: map['paymentMethod'] as String,
-      cashierName: map['cashierName'] as String,
-      order: map['order'] as OrderModel,
+      cashierName: map['cashierName'] as String? ?? '',
+      order: OrderModel.fromMap(map['order'] as Map<String, dynamic>),
       createdAt: map['createdAt'] as String,
     );
   }

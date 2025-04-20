@@ -1,17 +1,15 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:order_management_flutter_app/features/category/bloc/category_bloc.dart';
 import 'package:order_management_flutter_app/features/category/model/category_model.dart';
+import '../../bloc/product_bloc.dart';
 
 class ProductInventoryFilter extends StatefulWidget {
-  final Function(String?) onCategorySelected;
   final Function(String) onSortOptionSelected;
 
   const ProductInventoryFilter({
     super.key,
-    required this.onCategorySelected,
     required this.onSortOptionSelected,
   });
 
@@ -102,7 +100,13 @@ class _ProductInventoryFilterState extends State<ProductInventoryFilter> {
                     setState(() {
                       selectedCategory = newValue ?? '';
                     });
-                    widget.onCategorySelected(newValue);
+                    if (selectedCategory != '') {
+                      context.read<ProductBloc>().add(ProductFetchStarted(
+                            categoryId: selectedCategory,
+                          ));
+                    } else {
+                      context.read<ProductBloc>().add(ProductFetchStarted());
+                    }
                   },
                   buttonStyleData: ButtonStyleData(
                     padding: const EdgeInsets.symmetric(horizontal: 10),

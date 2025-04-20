@@ -43,13 +43,14 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
       InvoiceCreateStarted event, Emitter<InvoiceState> emit) async {
     try {
       emit(InvoiceCreateInProgress());
-      await invoiceService.createInvoice(
+      final invoice = await invoiceService.createInvoice(
           orderId: event.orderId,
           paymentMethod: event.paymentMethod,
           amountGiven: event.amountGiven);
-      emit(InvoiceCreateSuccess());
-      add(InvoiceFetchStarted());
+      print('Invoice created successfully');
+      emit(InvoiceCreateSuccess(invoice: invoice));
     } catch (e) {
+      print('Error in creating invoice: $e');
       emit(InvoiceCreateFailure(error: e.toString()));
     }
   }

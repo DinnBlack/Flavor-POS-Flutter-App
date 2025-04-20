@@ -4,7 +4,12 @@ part of 'product_bloc.dart';
 sealed class ProductEvent {}
 
 // Product Fetch
-class ProductFetchStarted extends ProductEvent {}
+class ProductFetchStarted extends ProductEvent {
+  final String? categoryId;
+  final bool? isShow;
+
+  ProductFetchStarted({this.isShow, this.categoryId});
+}
 
 // Product Cus Fetch
 class ProductCusFetchStarted extends ProductEvent {
@@ -56,4 +61,17 @@ class ProductDeleteStarted extends ProductEvent {
   final String id;
 
   ProductDeleteStarted({required this.id});
+}
+
+// Toggle Product Show/Hide
+class ProductShowStarted extends ProductEvent {
+  final ProductModel product;
+
+  ProductShowStarted({required this.product});
+}
+
+class ProductHideStarted extends ProductEvent {
+  final ProductModel product;
+
+  ProductHideStarted({required this.product});
 }

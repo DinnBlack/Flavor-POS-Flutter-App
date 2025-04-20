@@ -20,34 +20,45 @@ class OrderCustomerCreateStarted extends OrderEvent {
 // order fetch
 class OrderFetchStarted extends OrderEvent {
   final List<String>? status;
+  final DateTime? startTime;
+  final DateTime? endTime;
 
-  OrderFetchStarted({this.status});
+  OrderFetchStarted({
+    this.status,
+    this.startTime,
+    this.endTime,
+  });
 }
 
 // reject order
 class OrderRejectStarted extends OrderEvent {
   final String orderId;
+  final bool isChef;
 
-  OrderRejectStarted({required this.orderId});
+  OrderRejectStarted(
+      {required this.orderId, required this.isChef});
 }
 
 // mark order as ready to deliver
 class OrderMarkReadyToDeliverStarted extends OrderEvent {
   final String orderId;
+  final bool isChef;
 
-  OrderMarkReadyToDeliverStarted({required this.orderId});
+  OrderMarkReadyToDeliverStarted({required this.orderId, required this.isChef});
 }
 
 // mark order as delivered
 class OrderMarkDeliveredStarted extends OrderEvent {
   final String orderId;
+  final bool isWaiter;
 
-  OrderMarkDeliveredStarted({required this.orderId});
+  OrderMarkDeliveredStarted({required this.orderId, required this.isWaiter});
 }
 
 // approve order
 class OrderApproveStarted extends OrderEvent {
   final String orderId;
+  final bool isChef;
 
-  OrderApproveStarted({required this.orderId});
+  OrderApproveStarted({required this.orderId, required this.isChef});
 }

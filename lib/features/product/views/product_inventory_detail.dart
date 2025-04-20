@@ -143,10 +143,21 @@ class _ProductInventoryDetailState extends State<ProductInventoryDetail> {
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                'https://olo-images-live.imgix.net/8f/8f8694d0003147f8a9e42b88fd3c4e6d.jpg?auto=format%2Ccompress&q=60&cs=tinysrgb&w=1200&h=800&fit=fill&fm=png32&bg=transparent&s=d9336295f5745120004b168ed1a79b5e',
+              child: (widget.product.image == null || widget.product.image!.isEmpty)
+                  ? Image.network(
+                'https://cdn-icons-png.flaticon.com/512/1046/1046784.png',
                 width: double.infinity,
                 fit: BoxFit.cover,
+              )
+                  : Image.network(
+                widget.product.image!,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Image.asset(
+                  'assets/images/product_default.jpg',
+                  fit: BoxFit.cover,
+                ),
+
               ),
             ),
           ),

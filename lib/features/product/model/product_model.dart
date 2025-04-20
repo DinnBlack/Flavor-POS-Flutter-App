@@ -48,13 +48,22 @@ class ProductModel extends Equatable {
 
   factory ProductModel.fromMap(Map<String, dynamic> map) {
     return ProductModel(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      price: (map['price'] as num).toDouble(),
-      description: map['description'] as String,
-      isShown: map['isShown'] as bool? ?? true,
-      image: map['image'] as String?,
+      id: map['id']?.toString() ?? '', // fallback nếu null
+      name: map['name']?.toString() ?? '',
+      price: _parsePrice(map['price']),
+      description: map['description']?.toString() ?? '',
+      isShown: map['isShown'] == true, // chỉ true nếu là true
+      image: map['image']?.toString(),
     );
+  }
+
+  static double _parsePrice(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
   }
 
   @override

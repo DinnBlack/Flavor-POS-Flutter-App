@@ -27,16 +27,18 @@ class _TableListItemState extends State<TableListItem> {
       BuildContext context, TableModel table, Offset position) async {
     final colors = Theme.of(context).colorScheme;
 
+    final isReserved = table.status == 'RESERVED';
+
     showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
           position.dx, position.dy, position.dx, position.dy),
       items: [
-        const PopupMenuItem<String>(
-          value: 'view',
+        PopupMenuItem<String>(
+          value: 'toggleStatus',
           child: Text(
-            "Xem chi tiết",
-            style: TextStyle(
+            isReserved ? "Mở bàn" : "Đóng bàn",
+            style: const TextStyle(
               fontWeight: FontWeight.normal,
             ),
           ),
@@ -65,15 +67,43 @@ class _TableListItemState extends State<TableListItem> {
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(
           color: Colors.grey.shade300,
-          width: 1, // Độ dày của border
+          width: 1,
         ),
       ),
     ).then((selectedValue) {
-      // Handle the selected value
       if (selectedValue != null) {
         switch (selectedValue) {
-          case 'view':
-            print('View details');
+          case 'toggleStatus':
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                final action = isReserved ? 'mở' : 'đóng';
+                return AlertDialog(
+                  title: Text('Xác nhận $action bàn'),
+                  content: Text(
+                      'Bạn có chắc chắn muốn $action bàn ${table.number}?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Hủy'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        if (isReserved) {
+                          context.read<TableBloc>().add(
+                              TableUpdateAvailableStarted(tableId: table.id));
+                        } else {
+                          context.read<TableBloc>().add(
+                              TableUpdateReservedStarted(tableId: table.id));
+                        }
+                      },
+                      child: const Text('Xác nhận'),
+                    ),
+                  ],
+                );
+              },
+            );
             break;
           case 'qrCode':
             showDialog(
@@ -93,13 +123,13 @@ class _TableListItemState extends State<TableListItem> {
             );
             break;
           case 'delete':
-          // Show confirmation dialog before deleting
             showDialog(
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
                   title: const Text('Xác nhận xóa bàn'),
-                  content:  Text('Bạn có chắc chắn muốn xóa bàn ${table.number} này?'),
+                  content: Text(
+                      'Bạn có chắc chắn muốn xóa bàn ${table.number} này?'),
                   actions: <Widget>[
                     TextButton(
                       onPressed: () {
@@ -109,7 +139,9 @@ class _TableListItemState extends State<TableListItem> {
                     ),
                     TextButton(
                       onPressed: () {
-                        context.read<TableBloc>().add(TableDeleteStarted(tableId: table.id));
+                        context
+                            .read<TableBloc>()
+                            .add(TableDeleteStarted(tableId: table.id));
                         Navigator.of(context).pop();
                       },
                       child: const Text('Xóa'),
@@ -145,62 +177,63 @@ class _TableListItemState extends State<TableListItem> {
     return BlocListener<TableBloc, TableState>(
       listener: (context, state) {
         if (state is TableDeleteSuccess) {
-          CustomToast.showToast(context,'Bàn ${widget.table.number} đã được xóa thành công!',
+          CustomToast.showToast(
+              context, 'Bàn ${widget.table.number} đã được xóa thành công!',
               type: ContentType.success);
         } else if (state is TableDeleteFailure) {
-          CustomToast.showToast(context,'Xóa bàn ${widget.table.number} thất bại!',
+          CustomToast.showToast(
+              context, 'Xóa bàn ${widget.table.number} thất bại!',
               type: ContentType.failure);
-
         }
       },
-  child: GestureDetector(
-      onLongPressStart: (LongPressStartDetails details) {
-        _showPopupMenu(context, widget.table, details.globalPosition);
-      },
-      child: Container(
-        padding: const EdgeInsets.all(defaultPadding),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Bàn ${widget.table.number}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      fontSize: 14,
-                      color: iconColor,
-                    ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              SvgPicture.asset(
-                'assets/icons/table.svg',
-                colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                width: 50,
-                height: 50,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Text(
-                '10:20 AM',
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      fontSize: 14,
-                      color: iconColor,
-                    ),
-              ),
-            ],
+      child: GestureDetector(
+        onLongPressStart: (LongPressStartDetails details) {
+          _showPopupMenu(context, widget.table, details.globalPosition);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(defaultPadding),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Bàn ${widget.table.number}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                        fontSize: 14,
+                        color: iconColor,
+                      ),
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                SvgPicture.asset(
+                  'assets/icons/table.svg',
+                  colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                  width: 50,
+                  height: 50,
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Text(
+                  '10:20 AM',
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        fontSize: 14,
+                        color: iconColor,
+                      ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
-);
+    );
   }
 }

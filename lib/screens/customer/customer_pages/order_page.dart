@@ -125,9 +125,8 @@ class _OrderPageState extends State<OrderPage> {
   final TextEditingController _nameController = TextEditingController();
   final FocusNode _nameFocusNode = FocusNode();
   final Distance distance = const Distance();
-  final LatLng storeLocation = const LatLng(10.952869, 105.082031);
-
-  final double maxDistance = 10000;
+  final LatLng storeLocation = const LatLng(10.730770, 106.699139);
+  final double maxDistance = 200;
 
   Future<bool> _checkLocation() async {
     try {
@@ -654,9 +653,15 @@ class _OrderPageState extends State<OrderPage> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.network(
-                        item.product.image ??
-                            'https://media.istockphoto.com/id/2184683390/photo/ramen-with-chopsticks-noodle-japanese-3d-icon-illustration.jpg?s=2048x2048&w=is&k=20&c=M3-8s953ST9vgERBw_q8qPsiv_0_EGgj7uySIFT0IZM=',
+                      child: item.product.image == null
+                          ? Image.asset(
+                        'assets/images/default_food.jpg',
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                      )
+                          : Image.network(
+                        item.product.image!,
                         width: 70,
                         height: 70,
                         fit: BoxFit.cover,

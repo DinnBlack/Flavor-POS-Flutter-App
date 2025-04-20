@@ -5,7 +5,7 @@ import 'package:order_management_flutter_app/features/order/model/order_item_mod
 import '../../../core/config/api_config.dart';
 import '../../../core/utils/api_headers.dart';
 import '../model/order_model.dart';
-
+import 'package:intl/intl.dart';
 class OrderService {
   final String baseUrl = "${ApiConfig.baseUrl}order";
   final String customerBaseUrl = "${ApiConfig.baseUrl}customer/orders";
@@ -15,38 +15,47 @@ class OrderService {
     int size = 1000,
     String sort = "createdAt,DESC",
     List<String>? statuses,
+    DateTime? startTime,
+    DateTime? endTime,
   }) async {
     try {
       final headers = await ApiHeaders.getHeaders();
-
       final url = "$baseUrl?page=$page&size=$size&sort=$sort";
 
-      final response = await http.get(
-        Uri.parse(url),
-        headers: headers,
-      );
+      final response = await http.get(Uri.parse(url), headers: headers);
+      final utf8DecodedBody = utf8.decode(response.bodyBytes);
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
+        final data = json.decode(utf8DecodedBody);
         final allOrders = (data['items'] as List)
             .map((item) => OrderModel.fromMap(item))
             .toList();
-
+        List<OrderModel> filteredOrders = allOrders;
         if (statuses != null && statuses.isNotEmpty) {
-          // Lọc local theo status
-          return allOrders
+          filteredOrders = filteredOrders
               .where((order) => statuses.contains(order.status))
               .toList();
         }
+        if (startTime != null || endTime != null) {
+          filteredOrders = filteredOrders.where((order) {
+            final orderTime = DateFormat("HH:mm dd-MM-yyyy").parse(order.createdAt);
+            final afterStart = startTime == null || orderTime.isAfter(startTime);
+            final beforeEnd = endTime == null || orderTime.isBefore(endTime);
+            return afterStart && beforeEnd;
+          }).toList();
+        }
 
-        return allOrders;
+        return filteredOrders;
       } else {
         throw Exception("Failed to load orders: ${response.body}");
       }
     } catch (e) {
       throw Exception("Error fetching orders: $e");
     }
+  }
+
+  DateTime parseCreatedAt(String createdAtString) {
+    return DateFormat("HH:mm dd-MM-yyyy").parse(createdAtString);
   }
 
 

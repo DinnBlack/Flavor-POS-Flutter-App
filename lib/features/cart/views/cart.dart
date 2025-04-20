@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:order_management_flutter_app/core/utils/responsive.dart';
 import 'package:order_management_flutter_app/features/floor/bloc/floor_bloc.dart';
 import 'package:order_management_flutter_app/features/floor/model/floor_model.dart';
 import '../../../core/utils/constants.dart';
@@ -35,6 +36,7 @@ class _MyCartState extends State<MyCart> {
     context.read<CartBloc>().add(CartFetchProductsStarted());
     context.read<FloorBloc>().add(FloorFetchStarted());
     context.read<TableBloc>().add(TableFetchStarted(status: 'AVAILABLE'));
+    selectedTable = '';
   }
 
   @override
@@ -43,46 +45,48 @@ class _MyCartState extends State<MyCart> {
 
     return Scaffold(
       backgroundColor: colors.secondary,
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: BlocBuilder<CartBloc, CartState>(
-              builder: (context, state) {
-                if (state is CartFetchProductsInProgress) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (state is CartFetchProductsFailure) {
-                  return Center(
-                      child: Text("Lỗi: ${state.error}",
-                          style: const TextStyle(color: Colors.red)));
-                }
-
-                if (state is CartFetchProductsSuccess) {
-                  final cartItems = state.cartItems;
-                  if (cartItems.isEmpty) {
-                    return const Center(
-                        child: Text("Giỏ hàng trống",
-                            style:
-                                TextStyle(fontSize: 16, color: Colors.grey)));
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(context),
+            Expanded(
+              child: BlocBuilder<CartBloc, CartState>(
+                builder: (context, state) {
+                  if (state is CartFetchProductsInProgress) {
+                    return const Center(child: CircularProgressIndicator());
                   }
 
-                  return ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    itemCount: cartItems.length,
-                    separatorBuilder: (context, index) => const DashDivider(),
-                    itemBuilder: (context, index) =>
-                        CartItem(cartItem: cartItems[index]),
-                  );
-                }
+                  if (state is CartFetchProductsFailure) {
+                    return Center(
+                        child: Text("Lỗi: ${state.error}",
+                            style: const TextStyle(color: Colors.red)));
+                  }
 
-                return const Center(child: Text("Giỏ hàng trống"));
-              },
+                  if (state is CartFetchProductsSuccess) {
+                    final cartItems = state.cartItems;
+                    if (cartItems.isEmpty) {
+                      return const Center(
+                          child: Text("Giỏ hàng trống",
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey)));
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      itemCount: cartItems.length,
+                      separatorBuilder: (context, index) => const DashDivider(),
+                      itemBuilder: (context, index) =>
+                          CartItem(cartItem: cartItems[index]),
+                    );
+                  }
+
+                  return const Center(child: Text("Giỏ hàng trống"));
+                },
+              ),
             ),
-          ),
-          _buildFooter(context),
-        ],
+            _buildFooter(context),
+          ],
+        ),
       ),
     );
   }
@@ -159,7 +163,6 @@ class _MyCartState extends State<MyCart> {
                   if (state is FloorFetchSuccess) {
                     final floors = state.floors;
                     if (selectedFloor.isEmpty && floors.isNotEmpty) {
-                      // Chọn tầng đầu tiên làm mặc định
                       selectedFloor = floors[0].name;
                     }
                     return Expanded(
@@ -219,8 +222,10 @@ class _MyCartState extends State<MyCart> {
                     final tables = state.tables;
                     final filteredTables = tables
                         .where((table) => table.floorName == selectedFloor)
+                        .toSet()
                         .toList();
 
+                    print(filteredTables);
                     if (selectedTable.isEmpty && filteredTables.isNotEmpty) {
                       selectedTable = filteredTables[0].number.toString();
                     }
@@ -254,9 +259,11 @@ class _MyCartState extends State<MyCart> {
                             ),
                           ),
                           onChanged: (String? newValue) {
-                            setState(() {
-                              selectedTable = newValue!;
-                            });
+                            if (newValue != null) {
+                              setState(() {
+                                selectedTable = newValue;
+                              });
+                            }
                           },
                           items: filteredTables.isEmpty
                               ? [
@@ -266,17 +273,23 @@ class _MyCartState extends State<MyCart> {
                                         style: TextStyle(fontSize: 12)),
                                   ),
                                 ]
-                              : filteredTables.map((TableModel table) {
-                                  return DropdownMenuItem<String>(
-                                    value: table.number.toString(),
-                                    child: Text('Bàn ${table.number}',
-                                        style: const TextStyle(fontSize: 12)),
-                                  );
-                                }).toList(),
+                              : filteredTables
+                                  .map((TableModel table) {
+                                    return DropdownMenuItem<String>(
+                                      value: table.number.toString(),
+                                      child: Text('Bàn ${table.number}',
+                                          style: const TextStyle(fontSize: 12)),
+                                    );
+                                  })
+                                  .toSet()
+                                  .toList(), // Loại bỏ bàn trùng lặp
                         ),
                       ),
                     );
-                  } else if (state is TableFetchFailure) {}
+                  } else if (state is TableFetchFailure) {
+                    // Handle failure state if necessary
+                    return const SizedBox.shrink();
+                  }
                   return const SizedBox.shrink();
                 },
               ),
@@ -337,6 +350,13 @@ class _MyCartState extends State<MyCart> {
                       CustomToast.showToast(context, "Gọi món thành công!",
                           type: ContentType.success);
                       context.read<CartBloc>().add(CartClearStarted());
+                      context
+                          .read<TableBloc>()
+                          .add(TableFetchStarted(status: 'AVAILABLE'));
+                      if (Responsive.isMobile(context)) Navigator.pop(context);
+                      setState(() {
+                        selectedTable = "";
+                      });
                     } else if (state is OrderStaffCreateFailure) {
                       CustomToast.showToast(context, "Gọi món thất bại!",
                           type: ContentType.failure);
@@ -350,11 +370,36 @@ class _MyCartState extends State<MyCart> {
                         child: ElevatedButton(
                           onPressed: state is OrderStaffCreateInProgress
                               ? null
-                              : () {
-                                  context.read<OrderBloc>().add(
-                                      OrderStaffCreateStarted(
-                                          tableNumber:
-                                              int.parse(selectedTable)));
+                              : () async {
+                                  final isConfirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("Xác nhận"),
+                                      content: const Text(
+                                          "Bạn có chắc muốn gọi món cho bàn này không?"),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
+                                          child: const Text("Hủy"),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
+                                          child: const Text("Gọi món"),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (isConfirmed == true) {
+                                    context.read<OrderBloc>().add(
+                                          OrderStaffCreateStarted(
+                                            tableNumber:
+                                                int.parse(selectedTable),
+                                          ),
+                                        );
+                                  }
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colors.primary,

@@ -1,108 +1,71 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:uuid/uuid.dart'; // 👈 THÊM import này
-
+import 'package:mime/mime.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/config/api_config.dart';
-import '../../../core/utils/api_headers.dart';
-
-class PresignedUploadResponse {
-  final String url;
-  final String key; // 👈 Bây giờ là required
-  final int expiration;
-  final Map<String, dynamic> signedHeaders;
-
-  PresignedUploadResponse({
-    required this.url,
-    required this.key,
-    required this.expiration,
-    required this.signedHeaders,
-  });
-
-  factory PresignedUploadResponse.fromJson(Map<String, dynamic> json) {
-    return PresignedUploadResponse(
-      url: json['url'],
-      key: json['key'],
-      expiration: json['expiration'],
-      signedHeaders: Map<String, dynamic>.from(json['signedHeaders']),
-    );
-  }
-}
 
 class S3Service {
-  final String baseUrl = "${ApiConfig.baseUrl}s3/presigned-request";
+  static const String baseUrl = "${ApiConfig.baseUrl}s3/presigned-request";
 
-  /// Tạo presigned URL để upload file
-  Future<PresignedUploadResponse> getPresignedUploadUrl({
+  /// Gửi request để lấy presigned URL
+  static Future<Map<String, dynamic>?> getPresignedUrl({
     required String contentType,
-    String acl = "private",
+    required String acl,
   }) async {
-    final headers = await ApiHeaders.getHeaders();
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token') ?? '';
 
-    // Tạo key duy nhất cho file
-    final uuid = const Uuid().v4();
-    final key = "resource/$uuid.png"; // có thể sửa đuôi nếu file không phải ảnh
+    final uri = Uri.parse('$baseUrl?contentType=$contentType&acl=$acl');
 
-    final uri = Uri.parse(
-      "$baseUrl?contentType=$contentType&acl=$acl&key=$key",
+    final response = await http.post(
+      uri,
+      headers: {
+        'Accept': '*/*',
+        'Authorization': 'Bearer $token',
+      },
     );
 
-    final response = await http.post(uri, headers: headers);
-
-    if (response.statusCode != 200) {
-      print('❌ Failed to get presigned URL: ${response.body}');
-      throw Exception("Failed to get presigned URL: ${response.body}");
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      print('❌ Failed to get presigned URL: ${response.statusCode}');
+      return null;
     }
-
-    final data = json.decode(response.body);
-    return PresignedUploadResponse.fromJson({
-      ...data,
-      'key': key, // đảm bảo key luôn có
-    });
   }
 
-  /// Upload file lên S3 bằng presigned URL (HTTP PUT)
-  Future<void> uploadFileToS3({
-    required String uploadUrl,
-    required File file,
+  /// Upload ảnh tới URL đã ký và trả về URL ảnh sau khi upload thành công
+  static Future<String?> uploadImage({
+    required File imageFile,
     required String contentType,
+    required String acl,
   }) async {
-    try {
-      final fileBytes = await file.readAsBytes();
+    final presignedData = await getPresignedUrl(contentType: contentType, acl: acl);
+    if (presignedData == null) return null;
 
-      final headers = {
-        "Content-Type": contentType,
-        "x-amz-acl": "private",
-      };
+    final url = presignedData['url'];
 
-      final response = await http.put(
-        Uri.parse(uploadUrl),
-        headers: headers,
-        body: fileBytes,
-      );
+    // Chuyển đổi signedHeaders từ Map<String, dynamic> sang Map<String, String>
+    final signedHeaders = Map<String, String>.from(presignedData['signedHeaders'] ?? {});
 
-      if (response.statusCode != 200) {
-        print('❌ Failed to upload file: ${response.body}');
-        throw Exception("Failed to upload file: ${response.body}");
-      }
-    } catch (e) {
-      print('🚨 Error uploading file: $e');
-      throw Exception("Error uploading file: $e");
+    final headers = {
+      'Content-Type': contentType,
+      'x-amz-acl': signedHeaders['x-amz-acl'] ?? acl,
+    };
+
+    final uploadResponse = await http.put(
+      Uri.parse(url),
+      headers: headers,
+      body: await imageFile.readAsBytes(),
+    );
+
+    if (uploadResponse.statusCode == 200) {
+      // Lấy link ảnh (phần trước dấu `?`)
+      final imageUrl = url.split('?').first;
+      return imageUrl;
+    } else {
+      print('Failed to upload image: ${uploadResponse.statusCode}');
+      return null;
     }
-  }
-
-  /// Lấy presigned URL để xem file sau khi upload
-  Future<String> getViewImageUrl({required String key}) async {
-    final headers = await ApiHeaders.getHeaders();
-    final uri = Uri.parse("$baseUrl?key=$key&contentDisposition=inline");
-
-    final response = await http.get(uri, headers: headers);
-
-    if (response.statusCode != 200) {
-      throw Exception("Failed to get image URL: ${response.body}");
-    }
-
-    final data = json.decode(response.body);
-    return data['url'];
   }
 }

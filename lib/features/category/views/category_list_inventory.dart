@@ -2,10 +2,9 @@ import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:intl/intl.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:order_management_flutter_app/core/utils/responsive.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:order_management_flutter_app/features/product/services/product_service.dart';
 import '../../../core/utils/constants.dart';
 import '../../../core/widgets/custom_toast.dart';
 import '../bloc/category_bloc.dart';
@@ -205,7 +204,16 @@ class CategoryListInventory extends StatelessWidget {
             DataCell(
               GestureDetector(
                 onTap: () => onCategorySelected(category),
-                child: const Center(child: Text('5')),
+                child: FutureBuilder<int>(
+                  future: ProductService().getTotalProductCount(categoryId: category.id.isEmpty ? null : category.id),
+                  builder: (context, snapshot) {
+                   if (snapshot.hasData) {
+                      return Center(child: Text('${snapshot.data}'));
+                    } else {
+                      return const Center(child: Text('0'));
+                    }
+                  },
+                ),
               ),
             ),
             DataCell(

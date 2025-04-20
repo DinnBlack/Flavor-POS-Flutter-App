@@ -4,7 +4,9 @@ import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 import '../model/product_model.dart';
 import '../services/product_service.dart';
+
 part 'product_event.dart';
+
 part 'product_state.dart';
 
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
@@ -17,6 +19,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     on<ProductCreateStarted>(_onProductCreateStarted);
     on<ProductUpdateStarted>(_onProductUpdateStarted);
     on<ProductDeleteStarted>(_onProductDeleteStarted);
+    on<ProductShowStarted>(_onProductShowStarted);
+    on<ProductHideStarted>(_onProductHideStarted);
 
     // _startPolling();
   }
@@ -38,7 +42,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       ProductFetchStarted event, Emitter<ProductState> emit) async {
     try {
       emit(ProductFetchInProgress());
-      final products = await productService.getProducts();
+      final products =
+          await productService.getProducts(categoryId: event.categoryId, isShown: event.isShow);
       emit(ProductFetchSuccess(products: products));
     } catch (e) {
       emit(ProductFetchFailure(error: e.toString()));
@@ -50,9 +55,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       ProductCusFetchStarted event, Emitter<ProductState> emit) async {
     try {
       emit(ProductCusFetchInProgress());
-      print(event.categoryId);
-      final products = await productService.getCustomerProducts(categoryId: event.categoryId);
-      print(products);
+      final products = await productService.getCustomerProducts(
+          categoryId: event.categoryId);
       emit(ProductCusFetchSuccess(products: products));
     } catch (e) {
       emit(ProductCusFetchFailure(error: e.toString()));
@@ -96,6 +100,30 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(ProductDeleteSuccess());
       add(ProductFetchStarted());
     } on Exception catch (e) {
+      emit(ProductUpdateFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _onProductShowStarted(
+      ProductShowStarted event, Emitter<ProductState> emit) async {
+    try {
+      emit(ProductUpdateInProgress());
+      await productService.showProduct(event.product);
+      emit(ProductUpdateSuccess());
+      add(ProductFetchStarted());
+    } catch (e) {
+      emit(ProductUpdateFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _onProductHideStarted(
+      ProductHideStarted event, Emitter<ProductState> emit) async {
+    try {
+      emit(ProductUpdateInProgress());
+      await productService.hideProduct(event.product);
+      emit(ProductUpdateSuccess());
+      add(ProductFetchStarted());
+    } catch (e) {
       emit(ProductUpdateFailure(error: e.toString()));
     }
   }

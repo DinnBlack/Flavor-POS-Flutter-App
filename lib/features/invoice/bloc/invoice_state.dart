@@ -23,7 +23,11 @@ class InvoiceFetchFailure extends InvoiceState {
 // Create
 class InvoiceCreateInProgress extends InvoiceState {}
 
-class InvoiceCreateSuccess extends InvoiceState {}
+class InvoiceCreateSuccess extends InvoiceState {
+  final InvoiceModel invoice;
+
+  InvoiceCreateSuccess({required this.invoice});
+}
 
 class InvoiceCreateFailure extends InvoiceState {
   final String error;

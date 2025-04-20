@@ -1,9 +1,7 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:intl/intl.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:order_management_flutter_app/core/utils/responsive.dart';
 import 'package:shimmer/shimmer.dart';
@@ -57,11 +55,11 @@ class ProductListInventory extends StatelessWidget {
             ),
           ),
         ),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'edit',
           child: Text(
-            "Chỉnh sửa",
-            style: TextStyle(
+            product.isShown ? "Tắt món ăn" : "Bật món ăn",
+            style: const TextStyle(
               fontWeight: FontWeight.normal,
             ),
           ),
@@ -92,7 +90,7 @@ class ProductListInventory extends StatelessWidget {
             print('View details');
             break;
           case 'edit':
-            print('Edit product');
+            _showIsShowConfirmationDialog(context, product);
             break;
           case 'delete':
             _showDeleteConfirmationDialog(context, product);
@@ -100,6 +98,48 @@ class ProductListInventory extends StatelessWidget {
         }
       }
     });
+  }
+
+  void _showIsShowConfirmationDialog(
+      BuildContext context, ProductModel product) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title:
+              Text("Xác nhận ${product.isShown ? "Tắt món ăn" : "Bật món ăn"}"),
+          content: Text(
+              "Món ăn ${product.name} sẽ được ${product.isShown ? "tắt" : "bật"}?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Hủy"),
+            ),
+            TextButton(
+              onPressed: () {
+                if (product.isShown) {
+                  context
+                      .read<ProductBloc>()
+                      .add(ProductHideStarted(product: product));
+                } else {
+                  context
+                      .read<ProductBloc>()
+                      .add(ProductShowStarted(product: product));
+                }
+
+                Navigator.of(context).pop();
+                CustomToast.showToast(context,
+                    "Sản phẩm đã được ${product.isShown ? "tắt" : "bật"}!",
+                    type: ContentType.success);
+              },
+              child: Text("${product.isShown ? "Tắt" : "Bật"}"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showDeleteConfirmationDialog(
@@ -185,6 +225,9 @@ class ProductListInventory extends StatelessWidget {
             size: ColumnSize.M),
         DataColumn2(
             label: _buildColumnHeader("Giá", colors), size: ColumnSize.S),
+        DataColumn2(
+            label: _buildColumnHeader("Trạng thái", colors),
+            size: ColumnSize.S),
         if (!isCompact)
           DataColumn2(
               label: _buildColumnHeader("Chi tiết", colors),
@@ -199,22 +242,30 @@ class ProductListInventory extends StatelessWidget {
                 child: Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      'https://olo-images-live.imgix.net/8f/8f8694d0003147f8a9e42b88fd3c4e6d.jpg?auto=format%2Ccompress&q=60&cs=tinysrgb&w=1200&h=800&fit=fill&fm=png32&bg=transparent&s=d9336295f5745120004b168ed1a79b5e',
-                      width: 80,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Image.asset(
-                        'assets/images/product_default.jpg',
-                        width: 80,
-                        height: 60,
-                        fit: BoxFit.cover,
-                      ),
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return _buildShimmerSkeleton();
-                      },
-                    ),
+                    child: (product.image == null || product.image!.isEmpty)
+                        ? Image.asset(
+                            'assets/images/default_food.jpg',
+                            width: 80,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            product.image!,
+                            width: 80,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Image.asset(
+                              'assets/images/product_default.jpg',
+                              width: 80,
+                              height: 60,
+                              fit: BoxFit.cover,
+                            ),
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return _buildShimmerSkeleton();
+                            },
+                          ),
                   ),
                 ),
               ),
@@ -227,6 +278,7 @@ class ProductListInventory extends StatelessWidget {
             ),
             DataCell(
                 Center(child: Text(CurrencyFormatter.format(product.price)))),
+            DataCell(Center(child: _buildStatusCell(product.isShown))),
             if (!isCompact)
               DataCell(
                 Center(
@@ -269,6 +321,39 @@ class ProductListInventory extends StatelessWidget {
           color: Colors.grey[300],
           borderRadius: BorderRadius.circular(8),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusCell(bool status) {
+    String displayText = '';
+    Color backgroundColor = Colors.grey;
+
+    switch (status) {
+      case false:
+        displayText = 'Đã tắt';
+        backgroundColor = Colors.red;
+        break;
+      case true:
+        displayText = 'Đang hoạt động';
+        backgroundColor = Colors.blue;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        displayText,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: backgroundColor,
+        ),
+        textAlign: TextAlign.center,
       ),
     );
   }

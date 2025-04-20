@@ -107,7 +107,6 @@ class _OrderHistoryState extends State<OrderHistory> {
     return BlocListener<OrderBloc, OrderState>(
       listener: (context, state) {
         if (state is OrderFetchSuccess) {
-          // Ensure widget is still mounted before calling setState
           if (mounted) {
             setState(() {
               _allOrders = state.orders;

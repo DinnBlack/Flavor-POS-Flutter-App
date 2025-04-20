@@ -1,15 +1,11 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:screenshot/screenshot.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../features/cart/bloc/cart_bloc.dart';
 import '../../../../features/product/bloc/product_bloc.dart';
-import '../../../core/utils/constants.dart';
-import '../../../core/utils/responsive.dart';
 import '../../../features/category/bloc/category_bloc.dart';
 import '../../../features/category/model/category_model.dart';
-import '../../../features/category/views/widgets/category_list_item.dart';
 import '../../../features/product/model/product_model.dart';
 import 'order_page.dart';
 
@@ -364,8 +360,9 @@ class _SelectionPageState extends State<SelectionPage> {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(10),
                   ),
-                  child: Image.network(
-                    'https://images.unsplash.com/photo-1708335583165-57aa131a4969?q=80&w=1925&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+                  child: product.image != null && product.image!.isNotEmpty
+                      ? Image.network(
+                    product.image!,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
@@ -375,7 +372,12 @@ class _SelectionPageState extends State<SelectionPage> {
                         child: const Icon(Icons.restaurant, size: 40),
                       );
                     },
-                  ),
+                  )
+                      : Image.asset(
+                          'assets/images/default_food.jpg',
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(10),

@@ -15,8 +15,11 @@ class CategoryService {
       Uri.parse("$baseUrl?page=$page&size=$size&sort=$sort"),
       headers: headers,
     );
+
+    final utf8DecodedBody = utf8.decode(response.bodyBytes);
+
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      final data = json.decode(utf8DecodedBody);
       final List<CategoryModel> categories = (data['items'] as List)
           .map((item) => CategoryModel.fromMap(item))
           .toList();
@@ -34,8 +37,9 @@ class CategoryService {
         "Content-Type": "application/json",
       },
     );
+    final utf8DecodedBody = utf8.decode(response.bodyBytes);
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      final data = json.decode(utf8DecodedBody);
       final List<CategoryModel> categories = (data['items'] as List)
           .map((item) => CategoryModel.fromMap(item))
           .toList();

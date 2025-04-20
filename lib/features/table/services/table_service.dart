@@ -11,7 +11,7 @@ class TableService {
   Future<List<TableModel>> getTables({
     int page = 0,
     int size = 100,
-    String sort = "createdAt,ASC",
+    String sort = "number,ASC",
     String? status,
   }) async {
     final headers = await ApiHeaders.getHeaders();
@@ -203,7 +203,8 @@ class TableService {
   Future<TableModel> getTableByTableNumber(int tableNumber) async {
     final headers = await ApiHeaders.getHeaders();
 
-    String url = "$baseUrl?filter=number=$tableNumber";
+    String url =
+        "$baseUrl?page=0&size=10&sort=createdAt,DESC&filter=number=$tableNumber";
 
     final response = await http.get(
       Uri.parse(url),
@@ -218,6 +219,30 @@ class TableService {
       return table;
     } else {
       throw Exception("Failed to load table with number $tableNumber");
+    }
+  }
+
+  // Lấy thông tin bàn theo số bàn (tableNumber)
+  Future<TableModel> getCustomerTableByNumber(int number) async {
+    String url =
+        "${ApiConfig.baseUrl}customer/tables?page=0&size=10&sort=createdAt,DESC&filter=number=$number";
+
+    final response = await http.get(
+      Uri.parse(url),
+    );
+
+    final utf8DecodedBody = utf8.decode(response.bodyBytes);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(utf8DecodedBody);
+      print(data);
+      if (data['items'].isNotEmpty) {
+        return TableModel.fromMap(data['items'][0]);
+      } else {
+        throw Exception("No table found with number $number");
+      }
+    } else {
+      throw Exception("Failed to load table with number $number");
     }
   }
 }

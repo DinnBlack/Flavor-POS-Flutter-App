@@ -76,9 +76,9 @@ class LoginScreen extends StatelessWidget {
   }
 
   Widget _buildMobileLayout(BuildContext context) {
-    return SingleChildScrollView(
+    return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(10),
         child: _buildLoginForm(context),
       ),
     );
@@ -86,85 +86,81 @@ class LoginScreen extends StatelessWidget {
 
   Widget _buildLoginForm(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(20),
       child: Card(
-        color: Colors.black.withOpacity(0.5),
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        color: Colors.black.withOpacity(0.6),
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Logo
+              Image.asset(
+                'assets/images/logo.png',
+                height: 64,
+              ),
+              const SizedBox(height: 16),
               const Text(
-                'Welcome back',
+                'Đăng nhập - Dành cho nhân viên',
                 style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                   color: Colors.white,
                 ),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+              const Text(
+                'Vui lòng đăng nhập để bắt đầu ca làm việc. Mọi hoạt động sẽ được ghi nhận để đảm bảo hiệu quả vận hành và minh bạch.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white60,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
 
-
-              // Login button
+              // Nút đăng nhập
               BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, state) {
-                  return ElevatedButton(
-                    onPressed: state is AuthLoginInProgress
-                        ? null
-                        : () {
-                            context.read<AuthBloc>().add(AuthLoginStarted());
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: state is AuthLoginInProgress
+                          ? null
+                          : () {
+                        context.read<AuthBloc>().add(AuthLoginStarted());
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orangeAccent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: state is AuthLoginInProgress
+                          ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor:
+                          AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                          : const Text(
+                        'Đăng nhập',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    child: state is AuthLoginInProgress
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.black),
-                            ),
-                          )
-                        : const Text(
-                            'Đăng nhập',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                   );
                 },
-              ),
-              const SizedBox(height: 20),
-
-              // Register link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Don't have an account? ",
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Register here',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
@@ -172,4 +168,5 @@ class LoginScreen extends StatelessWidget {
       ),
     );
   }
+
 }

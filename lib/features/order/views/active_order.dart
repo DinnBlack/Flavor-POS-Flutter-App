@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:order_management_flutter_app/core/utils/currency_formatter.dart';
 import 'package:order_management_flutter_app/core/utils/responsive.dart';
-import '../../floor/bloc/floor_bloc.dart';
 import '../bloc/order_bloc.dart';
 import '../model/order_model.dart';
 import 'active_order_detail.dart';
@@ -33,7 +32,12 @@ class _ActiveOrderState extends State<ActiveOrder> {
   void _fetchOrders() {
     context.read<OrderBloc>().add(
           OrderFetchStarted(
-            status: const ['PENDING', 'APPROVED', 'READY_TO_DELIVER', 'DELIVERED'],
+            status: const [
+              'PENDING',
+              'APPROVED',
+              'READY_TO_DELIVER',
+              'DELIVERED'
+            ],
           ),
         );
   }
@@ -92,11 +96,10 @@ class _ActiveOrderState extends State<ActiveOrder> {
     );
   }
 
-
   int _getCrossAxisCount(BuildContext context) {
     if (Responsive.isDesktop(context)) return 6;
     if (Responsive.isTablet(context)) return 5;
-    if (Responsive.isMobile(context)) return 3;
+    if (Responsive.isMobile(context)) return 2;
     return 1;
   }
 
@@ -164,9 +167,7 @@ class _ActiveOrderState extends State<ActiveOrder> {
                           },
                         ),
                       ),
-                      const SizedBox(
-                        width: 10,
-                      ),
+                      const SizedBox(width: 10),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -181,83 +182,110 @@ class _ActiveOrderState extends State<ActiveOrder> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Order Grid
+
+                // Content
                 Expanded(
-                    child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: colors.secondary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: GridView.builder(
-                          itemCount: filteredOrders.length,
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: _getCrossAxisCount(context),
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                            childAspectRatio: 1.4,
-                          ),
-                          itemBuilder: (context, index) {
-                            final order = filteredOrders[index];
-                            return GestureDetector(
-                              onTap: () => _showOrderDetails(order),
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(order.status)
-                                      .withOpacity(0.05),
-                                  border: Border.all(
-                                      color: _getStatusColor(order.status),
-                                      width: 1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          "Bàn ${order.tableNumber}",
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14),
-                                        ),
-                                        Icon(Icons.receipt_long,
-                                            size: 20,
-                                            color:
-                                                _getStatusColor(order.status)),
-                                      ],
-                                    ),
-                                    Text(
-                                      _getStatusLabel(order.status),
-                                      style: TextStyle(
-                                          color: _getStatusColor(order.status),
-                                          fontWeight: FontWeight.w500),
-                                    ),
-                                    Text(
-                                      CurrencyFormatter.format(order.total),
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
+                  child: filteredOrders.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.network(
+                                'https://cdn-icons-png.flaticon.com/512/4076/4076549.png',
+                                height: 120,
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                "Không có đơn hàng",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
                               ),
-                            );
-                          },
+                              const SizedBox(height: 5),
+                              const Text(
+                                "Hãy kiểm tra lại trạng thái đơn hàng hoặc thử lại sau.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: colors.secondary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: GridView.builder(
+                            itemCount: filteredOrders.length,
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: _getCrossAxisCount(context),
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                              childAspectRatio: 1.4,
+                            ),
+                            itemBuilder: (context, index) {
+                              final order = filteredOrders[index];
+                              return GestureDetector(
+                                onTap: () => _showOrderDetails(order),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: _getStatusColor(order.status)
+                                        .withOpacity(0.05),
+                                    border: Border.all(
+                                      color: _getStatusColor(order.status),
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "Bàn ${order.tableNumber}",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Icon(Icons.receipt_long,
+                                              size: 20,
+                                              color: _getStatusColor(
+                                                  order.status)),
+                                        ],
+                                      ),
+                                      Text(
+                                        _getStatusLabel(order.status),
+                                        style: TextStyle(
+                                          color: _getStatusColor(order.status),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        CurrencyFormatter.format(order.total),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                )),
+                ),
               ],
             ),
           );

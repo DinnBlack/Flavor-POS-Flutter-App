@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:order_management_flutter_app/features/category/model/category_model.dart';
 import '../../../../core/utils/constants.dart';
 import '../../../../core/utils/responsive.dart';
+import '../../../../features/product/services/product_service.dart'; // Import the service
 
 class CategoryListItem extends StatelessWidget {
   const CategoryListItem({
@@ -20,11 +21,12 @@ class CategoryListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
         width: 120,
-        height: 60 ,
+        height: 60,
         child: Container(
           padding: const EdgeInsets.all(defaultPadding),
           decoration: BoxDecoration(
@@ -49,9 +51,22 @@ class CategoryListItem extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Text(
-                "5 Items",
-                style: Theme.of(context).textTheme.bodySmall!,
+              FutureBuilder<int>(
+                future: ProductService().getTotalProductCount(
+                    categoryId: category.id.isEmpty ? null : category.id),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Text(
+                      "${snapshot.data} sản phẩm",
+                      style: Theme.of(context).textTheme.bodySmall!,
+                    );
+                  } else {
+                    return  Text(
+                      "0 sản phẩm",
+                      style: Theme.of(context).textTheme.bodySmall!,
+                    );
+                  }
+                },
               ),
             ],
           ),

@@ -1,9 +1,9 @@
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:order_management_flutter_app/features/auth/views/login_screen.dart';
 import 'package:order_management_flutter_app/features/invoice/bloc/invoice_bloc.dart';
+import 'package:order_management_flutter_app/features/user/bloc/user_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'core/controllers/menu_app_controller.dart';
@@ -16,6 +16,7 @@ import 'features/category/bloc/category_bloc.dart';
 import 'features/floor/bloc/floor_bloc.dart';
 import 'features/order/bloc/order_bloc.dart';
 import 'features/product/bloc/product_bloc.dart';
+import 'features/shift/bloc/shift_bloc.dart';
 import 'features/table/bloc/table_bloc.dart';
 import 'screens/staff/main_staff_screen.dart';
 
@@ -90,6 +91,8 @@ class _StaffAppState extends State<StaffApp> {
         BlocProvider(create: (context) => AuthBloc()),
         BlocProvider(create: (context) => CategoryBloc()),
         BlocProvider(create: (context) => InvoiceBloc()),
+        BlocProvider(create: (context) => UserBloc()),
+        BlocProvider(create: (context) => ShiftBloc()),
       ],
       child: MaterialApp.router(
         title: 'Flavor Customer',
